@@ -153,7 +153,7 @@ const commands = {
     const lang = getLang(ctx.author.userId);
     if (!ctx.args || !ctx.args.trim()) return ctx.reply(t(lang, "tts_needText"));
     try {
-      const audio = await textToSpeech(ctx.args);
+      const audio = await textToSpeech(ctx.args, lang);
       return ctx.replyAudio(audio);
     } catch (err) {
       return ctx.reply(t(lang, "tts_error", { error: err.message }));
