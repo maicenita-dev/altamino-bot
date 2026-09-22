@@ -83,6 +83,10 @@ const RPS_NAMES = {
 
 const STRINGS = {
   es: {
+    intro_message: "¡Hola! Soy {name} 👋 Escribí /help para ver todo lo que puedo hacer.",
+    ask_needQuestion: "Escribí una pregunta después del comando. Ej: /ask qué día es hoy",
+    ask_error: "No pude conseguir una respuesta ahora mismo, intentá de nuevo.",
+    ping_result: "🏓 ¡Pong!",
     horoscope_notRecognized: "Signo no reconocido. Opciones: {options}",
     horoscope_header: "{sign} — {date}",
     roll_result: "🎲 Sacaste {a} y {b} (total: {total})",
@@ -117,6 +121,10 @@ const STRINGS = {
     trasl_error: "No pude traducir el texto, intentá de nuevo.",
   },
   en: {
+    intro_message: "Hi! I'm {name} 👋 Type /help to see everything I can do.",
+    ask_needQuestion: "Write a question after the command. Ex: /ask what day is it",
+    ask_error: "I couldn't get a response right now, try again.",
+    ping_result: "🏓 Pong!",
     horoscope_notRecognized: "Sign not recognized. Options: {options}",
     horoscope_header: "{sign} — {date}",
     roll_result: "🎲 You got {a} and {b} (total: {total})",
@@ -151,6 +159,10 @@ const STRINGS = {
     trasl_error: "Couldn't translate the text, try again.",
   },
   ru: {
+    intro_message: "Привет! Я {name} 👋 Напиши /help, чтобы увидеть всё, что я умею.",
+    ask_needQuestion: "Напиши вопрос после команды. Пример: /ask какой сегодня день",
+    ask_error: "Не удалось получить ответ сейчас, попробуй снова.",
+    ping_result: "🏓 Понг!",
     horoscope_notRecognized: "Знак не распознан. Варианты: {options}",
     horoscope_header: "{sign} — {date}",
     roll_result: "🎲 Выпало {a} и {b} (всего: {total})",
