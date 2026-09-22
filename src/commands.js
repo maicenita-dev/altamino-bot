@@ -6,14 +6,12 @@
 //   ctx.args        -> string, todo lo que sigue al comando
 //   ctx.author       -> { userId, nickname }
 //   ctx.members       -> array de { userId, nickname } del chat (para /ship)
-//   ctx.mentioned      -> array de { userId, nickname } mencionados en el mensaje (para /marry)
 //   ctx.reply(text)     -> async, manda texto
 //   ctx.replyAudio(buffer) -> async, manda el buffer como mensaje de voz
 
 const { getHoroscope } = require("./horoscope");
 const games = require("./games");
 const { textToSpeech } = require("./tts");
-const marriage = require("./marriage");
 
 const commands = {
   "/horoscopo": async (ctx) => {
@@ -31,14 +29,6 @@ const commands = {
   "/choose": async (ctx) => ctx.reply(games.choose(ctx.args)),
   "/rps": async (ctx) => ctx.reply(games.rps(ctx.args)),
 
-  "/marry": async (ctx) => {
-    const target = ctx.mentioned && ctx.mentioned[0];
-    const result = marriage.propose(ctx.author, target);
-    return ctx.reply(result.message);
-  },
-  "/divorce": async (ctx) => ctx.reply(marriage.divorce(ctx.author).message),
-  "/marriage": async (ctx) => ctx.reply(marriage.status(ctx.author, ctx.members).message),
-
   "/tts": async (ctx) => {
     if (!ctx.args || !ctx.args.trim()) {
       return ctx.reply("Escribí el texto después del comando. Ej: /tts hola");
@@ -52,6 +42,10 @@ const commands = {
   },
 };
 
+/**
+ * @param {string} rawText  contenido completo del mensaje entrante
+ * @param {object} ctx      contexto armado por el adapter (sin .args todavía)
+ */
 async function handleMessage(rawText, ctx) {
   const trimmed = (rawText || "").trim();
   if (!trimmed.startsWith("/")) return false;

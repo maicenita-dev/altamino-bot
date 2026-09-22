@@ -16,6 +16,7 @@ const SIGNS = {
   piscis: "♓ Piscis",
 };
 
+// Agregá las frases que quieras acá
 const PHRASES = [
   "Hoy es un buen día para tomar una decisión que venías postergando.",
   "Cuidado con los gastos impulsivos, tu billetera te lo va a agradecer.",
@@ -27,6 +28,7 @@ const PHRASES = [
   "Tu paciencia va a ser puesta a prueba, respirá antes de responder.",
 ];
 
+// Hash simple y determinístico (mismo string -> mismo número siempre)
 function hash(str) {
   let h = 0;
   for (let i = 0; i < str.length; i++) {
@@ -40,9 +42,13 @@ function normalizeSign(raw) {
     .toLowerCase()
     .trim()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g, ""); // saca tildes: géminis -> geminis
 }
 
+/**
+ * Devuelve el horóscopo del día para un signo.
+ * La misma fecha + mismo signo siempre da la misma frase.
+ */
 function getHoroscope(rawSign) {
   const key = normalizeSign(rawSign);
   if (!SIGNS[key]) {
@@ -52,7 +58,7 @@ function getHoroscope(rawSign) {
     };
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const idx = hash(`${today}-${key}`) % PHRASES.length;
 
   return {

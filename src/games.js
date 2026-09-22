@@ -35,6 +35,7 @@ function percent(what) {
   return `📊 ${what.trim()}: ${randInt(0, 100)}%`;
 }
 
+// members: array de {userId, nickname}
 function ship(members) {
   if (!members || members.length < 2) return "Necesito al menos 2 personas en el chat.";
   const shuffled = [...members].sort(() => Math.random() - 0.5);
