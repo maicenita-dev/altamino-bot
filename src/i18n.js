@@ -83,7 +83,6 @@ const RPS_NAMES = {
 
 const STRINGS = {
   es: {
-    ping_result: "🏓 ¡Pong!",
     horoscope_notRecognized: "Signo no reconocido. Opciones: {options}",
     horoscope_header: "{sign} — {date}",
     roll_result: "🎲 Sacaste {a} y {b} (total: {total})",
@@ -118,7 +117,6 @@ const STRINGS = {
     trasl_error: "No pude traducir el texto, intentá de nuevo.",
   },
   en: {
-    ping_result: "🏓 Pong!",
     horoscope_notRecognized: "Sign not recognized. Options: {options}",
     horoscope_header: "{sign} — {date}",
     roll_result: "🎲 You got {a} and {b} (total: {total})",
@@ -153,7 +151,6 @@ const STRINGS = {
     trasl_error: "Couldn't translate the text, try again.",
   },
   ru: {
-    ping_result: "🏓 Понг!",
     horoscope_notRecognized: "Знак не распознан. Варианты: {options}",
     horoscope_header: "{sign} — {date}",
     roll_result: "🎲 Выпало {a} и {b} (всего: {total})",

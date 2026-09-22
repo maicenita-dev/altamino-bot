@@ -6,180 +6,38 @@
 //   ctx.args        -> string, todo lo que sigue al comando
 //   ctx.author       -> { userId, nickname }
 //   ctx.members       -> array de { userId, nickname } del chat (para /ship)
-//   ctx.mentioned      -> array de { userId, nickname } mencionados (para /marry)
 //   ctx.reply(text)     -> async, manda texto
 //   ctx.replyAudio(buffer) -> async, manda el buffer como mensaje de voz
-//   ctx.replyMedia(buffer, filename) -> async, OPCIONAL, manda un archivo (ej. gif)
 
 const { getHoroscope } = require("./horoscope");
 const games = require("./games");
 const { textToSpeech } = require("./tts");
-const marriage = require("./marriage");
-const { getGif } = require("./gifs");
-const { t, SIGN_NAMES, HOROSCOPE_PHRASES, EIGHTBALL_ANSWERS, RPS_NAMES } = require("./i18n");
-const { getLang, setLang, SUPPORTED: LANGS } = require("./lang");
-const { translateText } = require("./translate");
-
-// Intenta mandar el gif de una reacción. Si no existe el archivo o el
-// adapter no soporta replyMedia todavía, no hace nada (silencioso).
-async function sendGif(ctx, key) {
-  if (typeof ctx.replyMedia !== "function") return;
-  const gif = getGif(key);
-  if (gif.ok) await ctx.replyMedia(gif.buffer, gif.filename);
-}
 
 const commands = {
-  "/ping": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    return ctx.reply(t(lang, "ping_result"));
-  },
-
   "/horoscopo": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
     const result = getHoroscope(ctx.args);
-    if (!result.ok) {
-      const options = result.signKeys.map((k) => SIGN_NAMES[lang][k]).join(", ");
-      return ctx.reply(t(lang, "horoscope_notRecognized", { options }));
-    }
-    const signName = SIGN_NAMES[lang][result.signKey];
-    const phrase = HOROSCOPE_PHRASES[lang][result.phraseIndex];
-    const header = t(lang, "horoscope_header", { sign: signName, date: result.dateISO });
-    await ctx.reply(`${header}\n\n${phrase}`);
-    return sendGif(ctx, "horoscopo");
+    if (!result.ok) return ctx.reply(result.message);
+    return ctx.reply(`${result.sign} — ${result.date}\n\n${result.text}`);
   },
 
-  "/roll": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const { a, b, total } = games.roll();
-    await ctx.reply(t(lang, "roll_result", { a, b, total }));
-    return sendGif(ctx, "roll");
-  },
-
-  "/dice": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const { sides, result } = games.dice(parseInt(ctx.args, 10));
-    await ctx.reply(t(lang, "dice_result", { sides, result }));
-    return sendGif(ctx, "dice");
-  },
-
-  "/flip": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const { result } = games.coin();
-    await ctx.reply(t(lang, result === "heads" ? "coin_heads" : "coin_tails"));
-    return sendGif(ctx, "flip");
-  },
-
-  "/8ball": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const result = games.eightball(ctx.args);
-    if (!result.ok) return ctx.reply(t(lang, "eightball_noQuestion"));
-    await ctx.reply(`🎱 ${EIGHTBALL_ANSWERS[lang][result.answerIndex]}`);
-    return sendGif(ctx, "eightball");
-  },
-
-  "/percent": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const result = games.percent(ctx.args);
-    if (!result.ok) return ctx.reply(t(lang, "percent_prompt"));
-    return ctx.reply(t(lang, "percent_result", { what: result.what, value: result.value }));
-  },
-
-  "/ship": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const result = games.ship(ctx.members);
-    if (!result.ok) return ctx.reply(t(lang, "ship_needMore"));
-    await ctx.reply(t(lang, "ship_result", { a: result.a, b: result.b, value: result.value }));
-    return sendGif(ctx, "ship");
-  },
-
-  "/choose": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const result = games.choose(ctx.args);
-    if (!result.ok) return ctx.reply(t(lang, "choose_needMore"));
-    return ctx.reply(t(lang, "choose_result", { choice: result.choice }));
-  },
-
-  "/rps": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const result = games.rps(ctx.args);
-    if (!result.ok) return ctx.reply(t(lang, "rps_invalid"));
-    const names = RPS_NAMES[lang];
-    await ctx.reply(
-      t(lang, "rps_result", {
-        user: names[result.userChoice],
-        bot: names[result.botChoice],
-        result: t(lang, `rps_${result.result}`),
-      })
-    );
-    return sendGif(ctx, "rps");
-  },
-
-  "/marry": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const target = ctx.mentioned && ctx.mentioned[0];
-    const result = marriage.propose(ctx.author, target);
-
-    const byStatus = {
-      noTarget: () => t(lang, "marry_noTarget"),
-      self: () => t(lang, "marry_self"),
-      alreadyMarried: () => t(lang, "marry_alreadyMarried"),
-      targetMarried: () => t(lang, "marry_targetMarried", { target: result.target }),
-      married: () => t(lang, "marry_married", { proposer: result.proposer, target: result.target }),
-      proposed: () => t(lang, "marry_proposed", { proposer: result.proposer, target: result.target }),
-    };
-
-    await ctx.reply(byStatus[result.status]());
-    if (result.status === "married") return sendGif(ctx, "marry");
-  },
-
-  "/divorce": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const result = marriage.divorce(ctx.author);
-    if (result.status === "notMarried") return ctx.reply(t(lang, "divorce_notMarried"));
-    await ctx.reply(t(lang, "divorce_done", { user: result.user }));
-    return sendGif(ctx, "divorce");
-  },
-
-  "/marriage": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const result = marriage.status(ctx.author, ctx.members);
-    if (!result.married) return ctx.reply(t(lang, "marriage_single"));
-    return ctx.reply(t(lang, "marriage_married", { partner: result.partner || "?" }));
-  },
+  "/roll": async (ctx) => ctx.reply(games.roll()),
+  "/dice": async (ctx) => ctx.reply(games.dice(parseInt(ctx.args, 10))),
+  "/flip": async (ctx) => ctx.reply(games.coin()),
+  "/8ball": async (ctx) => ctx.reply(games.eightball(ctx.args)),
+  "/percent": async (ctx) => ctx.reply(games.percent(ctx.args)),
+  "/ship": async (ctx) => ctx.reply(games.ship(ctx.members)),
+  "/choose": async (ctx) => ctx.reply(games.choose(ctx.args)),
+  "/rps": async (ctx) => ctx.reply(games.rps(ctx.args)),
 
   "/tts": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    if (!ctx.args || !ctx.args.trim()) return ctx.reply(t(lang, "tts_needText"));
+    if (!ctx.args || !ctx.args.trim()) {
+      return ctx.reply("Escribí el texto después del comando. Ej: /tts hola");
+    }
     try {
       const audio = await textToSpeech(ctx.args);
       return ctx.replyAudio(audio);
     } catch (err) {
-      return ctx.reply(t(lang, "tts_error", { error: err.message }));
-    }
-  },
-
-  "/langset": async (ctx) => {
-    const requested = (ctx.args || "").trim().toLowerCase();
-    if (!LANGS.includes(requested)) {
-      const lang = getLang(ctx.author.userId);
-      return ctx.reply(t(lang, "langset_usage"));
-    }
-    setLang(ctx.author.userId, requested);
-    return ctx.reply(t(requested, "langset_done", { lang: requested }));
-  },
-
-  "/trasl": async (ctx) => {
-    const lang = getLang(ctx.author.userId);
-    const [target, ...rest] = (ctx.args || "").trim().split(/\s+/);
-    const text = rest.join(" ");
-    if (!LANGS.includes(target) || !text) {
-      return ctx.reply(t(lang, "trasl_usage"));
-    }
-    try {
-      const translated = await translateText(text, target);
-      return ctx.reply(translated);
-    } catch {
-      return ctx.reply(t(lang, "trasl_error"));
+      return ctx.reply(`No pude generar el audio: ${err.message}`);
     }
   },
 };
