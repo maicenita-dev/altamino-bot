@@ -1,9 +1,19 @@
 // src/commands.js
-// Conecta comandos de texto con la lógica pura.
+// Conecta comandos de texto con la lógica pura. No sabe nada de cómo
+// se manda el mensaje: eso lo hace el "ctx" que le pasa el adapter.
+//
+// ctx esperado (lo arma el adapter, según lo que devuelva la lib de Alx0rr):
+//   ctx.args        -> string, todo lo que sigue al comando
+//   ctx.author       -> { userId, nickname }
+//   ctx.members       -> array de { userId, nickname } del chat (para /ship)
+//   ctx.mentioned      -> array de { userId, nickname } mencionados en el mensaje (para /marry)
+//   ctx.reply(text)     -> async, manda texto
+//   ctx.replyAudio(buffer) -> async, manda el buffer como mensaje de voz
 
 const { getHoroscope } = require("./horoscope");
 const games = require("./games");
 const { textToSpeech } = require("./tts");
+const marriage = require("./marriage");
 
 const commands = {
   "/horoscopo": async (ctx) => {
@@ -20,6 +30,14 @@ const commands = {
   "/ship": async (ctx) => ctx.reply(games.ship(ctx.members)),
   "/choose": async (ctx) => ctx.reply(games.choose(ctx.args)),
   "/rps": async (ctx) => ctx.reply(games.rps(ctx.args)),
+
+  "/marry": async (ctx) => {
+    const target = ctx.mentioned && ctx.mentioned[0];
+    const result = marriage.propose(ctx.author, target);
+    return ctx.reply(result.message);
+  },
+  "/divorce": async (ctx) => ctx.reply(marriage.divorce(ctx.author).message),
+  "/marriage": async (ctx) => ctx.reply(marriage.status(ctx.author, ctx.members).message),
 
   "/tts": async (ctx) => {
     if (!ctx.args || !ctx.args.trim()) {
