@@ -1,6 +1,6 @@
 """
 Minijuegos. Copiar a: src/aa/modules/fun.py
-Comandos: /ping /roll /dice /flip /8ball /percent /ship /choose /rps
+Comandos: !ping !roll !dice !flip /8ball !percent !ship !choose !rps
 """
 from altamino import respObject
 

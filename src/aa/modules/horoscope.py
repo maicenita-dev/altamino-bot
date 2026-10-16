@@ -12,7 +12,7 @@ from src.core.horoscope import get_horoscope
 from src.core.i18n import HOROSCOPE_PHRASES, SIGN_NAMES, t
 
 
-@client.command(["/horoscopo", "/horóscopo"])
+@client.command(["!horoscopo", "/horóscopo"])
 @commands_enable_required()
 async def cmd_horoscope(event: respObject.Event):
     lang = lang_of(event)

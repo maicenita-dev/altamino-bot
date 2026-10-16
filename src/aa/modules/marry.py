@@ -1,6 +1,6 @@
 """
 Casamientos. Copiar a: src/aa/modules/marry.py
-Comandos: /marry @usuario, /divorce, /marriage
+Comandos: !marry @usuario, !divorce, !marriage
 """
 from altamino import respObject
 

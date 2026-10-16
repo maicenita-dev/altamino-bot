@@ -1,16 +1,16 @@
 """
 ÚNICO lugar que toca la API de altamino.py para datos "extra" (nickname,
-miembros del chat, menciones, enviar gifs). Si algo falla al probar,
-se ajusta acá y listo: el resto del bot no se entera.
-
-Lo que YA está confirmado por tus horoscope.py / tts.py:
-  event.message.content / .author.userId / .chatId
-  event.sub_client or event.client  ->  .send_media(chatId, archivo)
-Lo que está ADIVINADO (marcado con  # ??? ):
-  nickname del autor, listar miembros, menciones.
+miembros del chat, menciones, enviar gifs). Todo verificado contra
+altamino 1.1.6.2:
+  Message: content, chatId, author (UserProfile: userId, nickname)
+  Event: client, sub_client (se crea solo desde el comId del chat)
+  get_chat_users(chatId, start, size) -> list[UserProfile]
 """
 from .gifs import get_gif
 from .lang import get_lang
+
+PAGE = 100
+MAX_MEMBERS = 500
 
 
 def args(event) -> str:
@@ -22,43 +22,37 @@ def target(event):
 
 
 def lang_of(event) -> str:
-    return get_lang(event.message.author.userId)
+    return get_lang(event.message.author.userId, scope_of(event))
 
 
 def author_of(event) -> dict:
     a = event.message.author
-    return {"userId": a.userId, "nickname": getattr(a, "nickname", None) or "?"}  # ???
+    return {"userId": a.userId, "nickname": a.nickname or "?"}
 
 
 def mentioned_of(event) -> list:
-    """Usuarios mencionados en el mensaje (Amino los manda en extensions.mentionedArray)."""
-    ext = getattr(event.message, "extensions", None) or {}  # ???
-    arr = ext.get("mentionedArray", []) if isinstance(ext, dict) else getattr(ext, "mentionedArray", [])
-    out = []
-    for m in arr or []:
-        uid = m.get("uid") if isinstance(m, dict) else getattr(m, "uid", None)
-        if uid:
-            out.append({"userId": uid, "nickname": None})
-    return out
+    """Usuarios mencionados (Amino los manda en extensions.mentionedArray)."""
+    return [{"userId": uid, "nickname": None}
+            for uid in (event.message.mentionUserIds or []) if uid]
 
 
 async def members_of(event) -> list:
-    """Miembros del chat como [{"userId", "nickname"}]."""
+    """Miembros del chat como [{"userId", "nickname"}], paginando."""
     tgt = target(event)
     chat_id = event.message.chatId
-    # ??? probamos nombres comunes de método hasta encontrar uno que exista
-    for name in ("get_chat_users", "get_chat_members", "get_chat_threads_users"):
-        fn = getattr(tgt, name, None)
-        if fn is None:
-            continue
-        res = await fn(chat_id)
-        users = getattr(res, "profileList", None) or getattr(res, "members", None) or res
-        return [
-            {"userId": getattr(u, "userId", None) or getattr(u, "uid", None),
-             "nickname": getattr(u, "nickname", None) or "?"}
-            for u in users
-        ]
-    return []
+    out, start = [], 0
+    while start < MAX_MEMBERS:
+        try:
+            page = await tgt.get_chat_users(chat_id, start=start, size=PAGE)
+        except Exception:
+            break
+        if not page:
+            break
+        out.extend({"userId": u.userId, "nickname": u.nickname or "?"} for u in page)
+        if len(page) < PAGE:
+            break
+        start += PAGE
+    return out
 
 
 async def send_gif(event, key: str) -> None:
@@ -69,3 +63,61 @@ async def send_gif(event, key: str) -> None:
             await target(event).send_media(event.message.chatId, gif)
         except Exception:
             pass
+
+
+def scope_of(event) -> str:
+    """Clave de datos: id de comunidad, o 'g<chatId>' para chats globales."""
+    if event.comId:
+        return str(event.comId)
+    return "g" + str(event.message.chatId)
+
+
+def is_staff(event) -> bool:
+    """Staff de la comunidad (rol >= 100) o dueño del bot (data/owners.json)."""
+    from .config import DATA_DIR
+    from .storage import load_json
+    a = event.message.author
+    try:
+        if int(getattr(a, "role", 0) or 0) >= 100:
+            return True
+    except (TypeError, ValueError):
+        pass
+    owners = load_json(DATA_DIR / "owners.json", [])
+    return str(a.userId) in {str(o) for o in owners}
+
+
+import time as _time  # noqa: E402
+
+from altamino import respObject as _ro  # noqa: E402
+
+_HOSTS: dict = {}
+
+
+async def _chat_hosts(event) -> set:
+    """Anfitrión + co-anfitriones del chat del evento (caché de 5 min)."""
+    chat_id = event.message.chatId
+    hit = _HOSTS.get(chat_id)
+    if hit and _time.time() - hit[0] < 300:
+        return hit[1]
+    ids = set()
+    try:
+        path = (f"/x{event.comId}/s/chat/thread/{chat_id}" if event.comId
+                else f"/g/s/chat/thread/{chat_id}")
+        resp = await event.client.req.make_async_request("GET", path)
+        chat = _ro.Chat(await resp.json())
+        if chat.author and chat.author.userId:
+            ids.add(str(chat.author.userId))
+        for c in chat.coHosts or []:
+            ids.add(str(c.get("uid") if isinstance(c, dict) else c))
+        _HOSTS[chat_id] = (_time.time(), ids)
+        print("hosts", chat_id, ids)
+    except Exception as e:
+        print("hosts error:", repr(e))
+    return ids
+
+
+async def is_staff_ex(event) -> bool:
+    """Staff de la comunidad, dueño del bot, o anfitrión/co-anfitrión de ESTE chat."""
+    if is_staff(event):
+        return True
+    return str(event.message.author.userId) in await _chat_hosts(event)

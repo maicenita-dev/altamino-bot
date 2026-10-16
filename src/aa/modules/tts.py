@@ -1,8 +1,8 @@
 """
 Texto a audio, ahora en el idioma de cada usuario.
-Copiar a: src/aa/modules/tts.py
-Requiere: pip install gTTS   (necesita internet)
+Requiere: pip install gTTS y ffmpeg
 """
+import subprocess
 from asyncio import to_thread
 from io import BytesIO
 
@@ -19,10 +19,15 @@ MAX_CHARS = 300
 
 
 def _make_audio(text: str, lang: str) -> BytesIO:
-    buf = BytesIO()
-    gTTS(text=text, lang=lang).write_to_fp(buf)
-    buf.seek(0)
-    buf.name = "voz.mp3"  # altamino.py detecta el tipo de media por la extensión
+    mp3 = BytesIO()
+    gTTS(text=text, lang=lang).write_to_fp(mp3)
+    out = subprocess.run(
+        ["ffmpeg", "-loglevel", "error", "-i", "pipe:0",
+         "-c:a", "aac", "-b:a", "64k", "-f", "adts", "pipe:1"],
+        input=mp3.getvalue(), capture_output=True, check=True,
+    )
+    buf = BytesIO(out.stdout)
+    buf.name = "voz.aac"
     return buf
 
 
@@ -37,6 +42,6 @@ async def cmd_tts(event: respObject.Event):
         return await reply(event, f"Max {MAX_CHARS}.")
     try:
         audio = await to_thread(_make_audio, text, lang)
+        await target(event).send_media(event.message.chatId, audio)
     except Exception as e:
         return await reply(event, t(lang, "tts_error", error=str(e)))
-    await target(event).send_media(event.message.chatId, audio)
