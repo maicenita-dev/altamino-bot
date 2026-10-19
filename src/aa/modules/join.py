@@ -10,25 +10,26 @@ from src.aa import client
 from src.utils import reply
 from src.utils.wrappers.chat_settings import commands_enable_required
 from src.aa.modules.start import greeting
+from src.core import deco
 from src.core.ctx import args, lang_of
 
 MSG = {
     "es": {
-        "bad": "No pude leer ese link.",
-        "joined_chat": "Listo, entré al chat 🎉",
-        "joined_com": "Listo, entré a la comunidad 🎉",
+        "bad": "No pude leer ese link",
+        "joined_chat": "Listo, entré al chat",
+        "joined_com": "Listo, entré a la comunidad",
         "error": "No pude entrar: {e}",
     },
     "en": {
-        "bad": "I couldn't read that link.",
-        "joined_chat": "Done, I joined the chat 🎉",
-        "joined_com": "Done, I joined the community 🎉",
+        "bad": "I couldn't read that link",
+        "joined_chat": "Done, I joined the chat",
+        "joined_com": "Done, I joined the community",
         "error": "Couldn't join: {e}",
     },
     "ru": {
-        "bad": "Не удалось прочитать ссылку.",
-        "joined_chat": "Готово, я вошёл в чат 🎉",
-        "joined_com": "Готово, я вошёл в сообщество 🎉",
+        "bad": "Не удалось прочитать ссылку",
+        "joined_chat": "Готово, я вошёл в чат",
+        "joined_com": "Готово, я вошёл в сообщество",
         "error": "Не удалось войти: {e}",
     },
 }
@@ -61,6 +62,7 @@ async def cmd_join(event: respObject.Event):
     if not link:
         return await reply(event, greeting(lang))
 
+    bad = deco.join_msg("bad", _m(lang, "bad"))
     info = None
     for cand in _candidates(link):
         try:
@@ -73,7 +75,7 @@ async def cmd_join(event: respObject.Event):
             info = res
             break
     if info is None:
-        return await reply(event, _m(lang, "bad"))
+        return await reply(event, bad)
 
     com_id = getattr(info, "comId", None) or 0
     obj_id = getattr(info, "objectId", None)
@@ -87,11 +89,11 @@ async def cmd_join(event: respObject.Event):
                 pass  # normalmente: ya estaba dentro
             if is_chat:
                 await client.get_community_client(com_id).join_chat(obj_id)
-                return await reply(event, _m(lang, "joined_chat"))
-            return await reply(event, _m(lang, "joined_com"))
+                return await reply(event, deco.join_msg("chat", _m(lang, "joined_chat")))
+            return await reply(event, deco.join_msg("com", _m(lang, "joined_com")))
         if is_chat:  # chat global
             await client.join_chat(obj_id)
-            return await reply(event, _m(lang, "joined_chat"))
-        await reply(event, _m(lang, "bad"))
+            return await reply(event, deco.join_msg("chat", _m(lang, "joined_chat")))
+        await reply(event, bad)
     except Exception as e:
-        await reply(event, _m(lang, "error", e=str(e)[:150]))
+        await reply(event, deco.join_msg("err", _m(lang, "error", e=str(e)[:150])))

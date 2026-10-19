@@ -13,6 +13,7 @@ from src.aa import client
 from src.utils import reply
 from src.utils.wrappers.chat_settings import commands_enable_required
 from src.core.ctx import args, lang_of, target
+from src.core import deco
 from src.core.i18n import t
 
 MAX_CHARS = 300
@@ -37,11 +38,11 @@ async def cmd_tts(event: respObject.Event):
     lang = lang_of(event)
     text = args(event)
     if not text:
-        return await reply(event, t(lang, "tts_needText"))
+        return await reply(event, deco.tts(t(lang, "tts_needText")))
     if len(text) > MAX_CHARS:
-        return await reply(event, f"Max {MAX_CHARS}.")
+        return await reply(event, deco.tts(t(lang, "tts_tooLong", max=MAX_CHARS)))
     try:
         audio = await to_thread(_make_audio, text, lang)
         await target(event).send_media(event.message.chatId, audio)
     except Exception as e:
-        return await reply(event, t(lang, "tts_error", error=str(e)))
+        return await reply(event, deco.tts(t(lang, "tts_error", error=str(e))))

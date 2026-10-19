@@ -44,7 +44,8 @@ async def members_of(event) -> list:
     while start < MAX_MEMBERS:
         try:
             page = await tgt.get_chat_users(chat_id, start=start, size=PAGE)
-        except Exception:
+        except Exception as e:
+            print("members_of error:", repr(e))
             break
         if not page:
             break
@@ -52,6 +53,8 @@ async def members_of(event) -> list:
         if len(page) < PAGE:
             break
         start += PAGE
+    if len(out) < 2:
+        out = await _members_fallback(event, out)
     return out
 
 
@@ -121,3 +124,21 @@ async def is_staff_ex(event) -> bool:
     if is_staff(event):
         return True
     return str(event.message.author.userId) in await _chat_hosts(event)
+
+
+
+async def _members_fallback(event, current):
+    """Si get_chat_users no sirve (chats globales), usa los miembros que trae el chat."""
+    try:
+        chat_id = event.message.chatId
+        path = (f"/x{event.comId}/s/chat/thread/{chat_id}" if event.comId
+                else f"/g/s/chat/thread/{chat_id}")
+        resp = await event.client.req.make_async_request("GET", path)
+        chat = _ro.Chat(await resp.json())
+        out = [{"userId": u.userId, "nickname": u.nickname or "?"}
+               for u in chat.membersSummary if u.userId]
+        print("members fallback:", len(out))
+        return out or current
+    except Exception as e:
+        print("members fallback error:", repr(e))
+        return current

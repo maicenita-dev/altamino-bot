@@ -1,5 +1,7 @@
 """Cartas estilo Mudae. Datos separados por comunidad (o por chat global)."""
 import random
+import subprocess
+from pathlib import Path
 import time
 from asyncio import Lock, to_thread
 from io import BytesIO
@@ -10,6 +12,7 @@ from altamino import respObject
 from src.aa import client
 from src.utils import reply
 from src.utils.wrappers.chat_settings import commands_enable_required
+from src.core import deco
 from src.core.catalog import get_catalog
 from src.core.config import DATA_DIR
 from src.core.ctx import args, lang_of, scope_of, target
@@ -42,7 +45,8 @@ MSG = {
         "harem": "Colección de {nick} ({n}) — pág. {p}/{tp}",
         "top": "Top coleccionistas",
         "no_top": "Todavía nadie reclamó personajes.",
-        "cd": "Tiradas: {left}/{n}\nReclamo: {claim}",
+        "cd_rolls": "Tiradas: {left}/{n}",
+        "cd_claim": "Reclamo: {claim}",
         "ready": "disponible ✅",
     },
     "en": {
@@ -60,7 +64,8 @@ MSG = {
         "harem": "{nick}'s collection ({n}) — page {p}/{tp}",
         "top": "Top collectors",
         "no_top": "Nobody has claimed characters yet.",
-        "cd": "Rolls: {left}/{n}\nClaim: {claim}",
+        "cd_rolls": "Rolls: {left}/{n}",
+        "cd_claim": "Claim: {claim}",
         "ready": "available ✅",
     },
     "ru": {
@@ -78,7 +83,8 @@ MSG = {
         "harem": "Коллекция {nick} ({n}) — стр. {p}/{tp}",
         "top": "Топ коллекционеров",
         "no_top": "Пока никто никого не забрал.",
-        "cd": "Броски: {left}/{n}\nЗабрать: {claim}",
+        "cd_rolls": "Броски: {left}/{n}",
+        "cd_claim": "Забрать: {claim}",
         "ready": "доступно ✅",
     },
 }
@@ -141,7 +147,12 @@ def _refresh(u, now):
         u["roll_start"], u["rolls"] = now, 0
 
 
-def _download(url: str) -> BytesIO:
+def _download_raw(url: str) -> BytesIO:
+    if not url.startswith("http"):
+        path = Path(url)
+        buf = BytesIO(path.read_bytes())
+        buf.name = path.name
+        return buf
     req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urlopen(req, timeout=20) as r:
         buf = BytesIO(r.read())
@@ -150,15 +161,52 @@ def _download(url: str) -> BytesIO:
     return buf
 
 
-def _pick(catalog, owners):
+CUSTOM_CHANCE = 0.25
+CAT_GROUPS = {"cartoon": {"hazbin", "helluva"}}
+
+
+def _in_cat(c, cat):
+    if cat == "anime":
+        return not c.get("custom")
+    mine = c.get("category")
+    return mine == cat or mine in CAT_GROUPS.get(cat, ())
+
+
+def _pick(catalog, owners, cat=None):
     free = [c for c in catalog if str(c["id"]) not in owners]
+    if cat:
+        free = [c for c in free if _in_cat(c, cat)]
+    else:
+        custom = [c for c in free if c.get("custom")]
+        if custom and random.random() < CUSTOM_CHANCE:
+            free = custom
     if not free:
         return None
     tier = random.choices([0, 1, 2, 3], weights=WEIGHTS)[0]
     return random.choice([c for c in free if c["rarity"] == tier] or free)
 
 
-async def _roll(event, kind):
+FAV_CHANCE = [0.05, 0.04, 0.025, 0.01]
+
+
+def _fav_boost(db, u, uid, catalog, cat):
+    """Favorito: probabilidad extra de que salga si está libre."""
+    fav = u.get("fav")
+    if not fav:
+        return None
+    fid = str(fav["id"])
+    own = db["owners"].get(fid)
+    if own:
+        if own["user"] != uid:
+            u["fav"], u["fav_at"] = None, 0
+        return None
+    ch = next((c for c in catalog if str(c["id"]) == fid), None)
+    if ch is None or (cat and not _in_cat(ch, cat)):
+        return None
+    return ch if random.random() < FAV_CHANCE[ch["rarity"]] else None
+
+
+async def _roll(event, kind, cat=None):
     lang, scope = lang_of(event), scope_of(event)
     async with _lock:
         db = _load(scope)
@@ -174,8 +222,8 @@ async def _roll(event, kind):
             print("cards catálogo:", repr(e))
             catalog = []
         if not catalog:
-            return await reply(event, _m(lang, "no_catalog"))
-        ch = _pick(catalog, db["owners"])
+            return await reply(event, deco.cards_error(_m(lang, "no_catalog")))
+        ch = _fav_boost(db, u, uid, catalog, cat) or _pick(catalog, db["owners"], cat)
         if ch is None:
             return await reply(event, _notice(lang, "none_free"))
         u["rolls"] += 1
@@ -185,7 +233,7 @@ async def _roll(event, kind):
         left = ROLLS - u["rolls"]
     chat_id = event.message.chatId
     try:
-        await target(event).send_media(chat_id, await to_thread(_download, ch["img"]))
+        await target(event).send_media(chat_id, await to_thread(_download, ch["img"]), "image/jpeg")
     except Exception as e:
         print("cards imagen:", repr(e))
     top = "[c]°    ‿      ‿   ‿     ‿   💟   ‿     ‿     ‿     ‿   °"
@@ -194,7 +242,7 @@ async def _roll(event, kind):
         top, "",
         d + f"{RARITY[ch['rarity']]} {ch['name']}",
         d + f"📺 {ch['series']}",
-        d + f"❤️ {ch['fav']}",
+        d + (f"❤️ {ch['fav']}" if ch.get("fav") else f"🏷️ {ch.get('category', '')}"),
         "",
         d + _m(lang, "roll_left", left=left, n=ROLLS),
         d + _m(lang, "roll_claim"),
@@ -206,13 +254,13 @@ async def _roll(event, kind):
 @client.command(["!waifu"])
 @commands_enable_required()
 async def cmd_waifu(event: respObject.Event):
-    await _roll(event, "waifu")
+    await _roll(event, "waifu", args(event).strip().lower() or None)
 
 
 @client.command(["!husbando"])
 @commands_enable_required()
 async def cmd_husbando(event: respObject.Event):
-    await _roll(event, "husbando")
+    await _roll(event, "husbando", args(event).strip().lower() or None)
 
 
 @client.command(["!claim"])
@@ -256,7 +304,7 @@ async def cmd_harem(event: respObject.Event):
     lang, scope = lang_of(event), scope_of(event)
     db = _load(scope)
     uid = event.message.author.userId
-    mine = [c for c in db["owners"].values() if c["user"] == uid]
+    mine = [dict(c, _id=k) for k, c in db["owners"].items() if c["user"] == uid]
     if not mine:
         return await reply(event, _notice(lang, "empty"))
     mine.sort(key=lambda c: (-c["rarity"], c["name"]))
@@ -268,7 +316,9 @@ async def cmd_harem(event: respObject.Event):
     top = "[c]°    ‿      ‿   ‿     ‿   💘   ‿     ‿     ‿     ‿   °"
     d = "𑇡  〬  "
     title = _m(lang, "harem", nick=nick, n=len(mine), p=p, tp=tp)
-    lines = [d + f"{RARITY[c['rarity']]} {c['name']}" for c in rows]
+    favid = str((db["users"].get(uid, {}).get("fav") or {}).get("id", ""))
+    lines = [d + f"{RARITY[c['rarity']]} {c['name']}" + (" ⭐" if c["_id"] == favid else "")
+             for c in rows]
     await reply(event, "\n".join(
         [top, "", "[cu]🎨 ᩥㅤ✿ㅤ" + title + "ㅤ♡ㅤᲘᲘ", ""] + lines + ["", top]))
 
@@ -301,4 +351,60 @@ async def cmd_cooldown(event: respObject.Event):
         _save(scope, db)
     wait = u.get("claim_at", 0) - now
     claim = _fmt(wait) if wait > 0 else _m(lang, "ready")
-    await reply(event, _m(lang, "cd", left=ROLLS - u["rolls"], n=ROLLS, claim=claim))
+    await reply(event, deco.cooldown(_m(lang, "cd_rolls", left=ROLLS - u["rolls"], n=ROLLS),
+                                     _m(lang, "cd_claim", claim=claim)))
+
+
+def _download_ffmpeg(url: str) -> BytesIO:
+    """Respaldo con ffmpeg: descarga la imagen y la convierte a JPG (Amino solo acepta jpg/png/gif)."""
+    raw = _download_raw(url)
+    data = raw.getvalue()
+    r = subprocess.run(
+        ["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-frames:v", "1",
+         "-vf", "scale='min(700,iw)':-2", "-pix_fmt", "yuvj420p", "-q:v", "3",
+         "-f", "mjpeg", "pipe:1"],
+        input=data, capture_output=True)
+    if r.returncode != 0 or not r.stdout:
+        print("cards: ffmpeg falló:", r.stderr[-200:])
+        return raw
+    print("cards img:", len(data), "->", len(r.stdout), "bytes")
+    buf = BytesIO(r.stdout)
+    buf.name = "card.jpg"
+    return buf
+
+
+def _flatten_jpg(data: bytes):
+    """Pone la imagen sobre fondo blanco (quita la transparencia) y la guarda como JPG."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+    im = Image.open(BytesIO(data))
+    im.seek(0)
+    if im.mode in ("RGBA", "LA", "P"):
+        im = im.convert("RGBA")
+        bg = Image.new("RGB", im.size, (255, 255, 255))
+        bg.paste(im, mask=im.getchannel("A"))
+        im = bg
+    else:
+        im = im.convert("RGB")
+    im.thumbnail((700, 1400))
+    out = BytesIO()
+    im.save(out, "JPEG", quality=88)
+    return out.getvalue()
+
+
+def _download(url: str) -> BytesIO:
+    raw = _download_raw(url)
+    data = raw.getvalue()
+    try:
+        jpg = _flatten_jpg(data)
+    except Exception as e:
+        print("cards: Pillow falló:", repr(e))
+        jpg = None
+    if jpg:
+        print("cards img:", len(data), "->", len(jpg), "bytes (Pillow)")
+        buf = BytesIO(jpg)
+        buf.name = "card.jpg"
+        return buf
+    return _download_ffmpeg(url)

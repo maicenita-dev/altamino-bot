@@ -67,7 +67,7 @@ def _build() -> None:
         print("catálogo", key, ":", n, "personajes")
 
 
-async def get_catalog(kind: str) -> list:
+async def _get_anilist(kind: str) -> list:
     data = load_json(FILES[kind], [])
     if data:
         return data
@@ -77,3 +77,14 @@ async def get_catalog(kind: str) -> list:
             await to_thread(_build)
             data = load_json(FILES[kind], [])
     return data
+
+
+CUSTOM_FILE = DATA_DIR / "catalog_custom.json"
+
+
+def _custom(kind: str) -> list:
+    return [c for c in load_json(CUSTOM_FILE, []) if c.get("gender") == kind and c.get("img")]
+
+
+async def get_catalog(kind: str) -> list:
+    return (await _get_anilist(kind)) + _custom(kind)

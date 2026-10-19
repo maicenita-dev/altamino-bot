@@ -20,10 +20,16 @@ TEXT = """[c]ྀི︶˚̣  ྀི︶˚̣  ྀི︶˚̣  ྀི︶˚ྀི̣︶
 [cbu]🌸ᩧㅤ⿻  ׁ   ꒰    Anime
 [CI]!waifu · !husbando · !claim
 !harem · !top · !cooldown
+!buscar · !carta · !serie
+!fav · !liberar · !rarezas
 
 [cbu]🛠ᩧㅤ⿻  ׁ   ꒰    Tools
 [CI]!ask <question> · !trasl <es|en|ru> <text>
 !tts <text> · !horoscopo <sign> · !ping
+
+[cbu]👋ᩧㅤ⿻  ׁ   ꒰    Welcome
+[CI]!setwelcome <text> · !setwelcome off|on|reset
+Staff only.
 
 [cbu]🌐ᩧㅤ⿻  ׁ   ꒰    Language
 [CI]!langset es|en|ru to change my language.

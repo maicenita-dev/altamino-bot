@@ -1,17 +1,19 @@
-"""Bienvenida automática + !setwelcome (solo staff)."""
+"""Bienvenida automática + !setwelcome (staff de la comunidad o anfitrión del chat)."""
 from altamino import respObject
 
 from src.aa import client
 from src.utils import reply
 from src.utils.wrappers.chat_settings import commands_enable_required
-from src.core.ctx import args, lang_of, target
+from src.core import deco
+from src.core.ctx import args, is_staff_ex, lang_of, scope_of, target
 from src.core.welcome import (get_cfg, get_welcome_image, get_welcome_message,
                               is_enabled, reset, set_enabled, set_text)
 
 MSG = {
     "es": {
         "staff": "Solo el staff puede cambiar la bienvenida.",
-        "usage": "Uso: !setwelcome <texto> · !setwelcome off · on · reset\nPodés usar {name} (quien entra) y {bot}.",
+        "usage_1": "Uso: !setwelcome <texto> · !setwelcome off · on · reset",
+        "usage_2": "Podés usar {name} (quien entra) y {bot}.",
         "saved": "Bienvenida guardada para este chat ✅",
         "off": "Bienvenida desactivada en este chat.",
         "on": "Bienvenida activada en este chat.",
@@ -21,7 +23,8 @@ MSG = {
     },
     "en": {
         "staff": "Only staff can change the welcome message.",
-        "usage": "Usage: !setwelcome <text> · !setwelcome off · on · reset\nYou can use {name} (who joins) and {bot}.",
+        "usage_1": "Usage: !setwelcome <text> · !setwelcome off · on · reset",
+        "usage_2": "You can use {name} (who joins) and {bot}.",
         "saved": "Welcome message saved for this chat ✅",
         "off": "Welcome message disabled in this chat.",
         "on": "Welcome message enabled in this chat.",
@@ -31,7 +34,8 @@ MSG = {
     },
     "ru": {
         "staff": "Менять приветствие может только персонал.",
-        "usage": "Использование: !setwelcome <текст> · !setwelcome off · on · reset\nМожно использовать {name} (кто зашёл) и {bot}.",
+        "usage_1": "Использование: !setwelcome <текст> · !setwelcome off · on · reset",
+        "usage_2": "Можно использовать {name} (кто зашёл) и {bot}.",
         "saved": "Приветствие сохранено для этого чата ✅",
         "off": "Приветствие в этом чате отключено.",
         "on": "Приветствие в этом чате включено.",
@@ -46,13 +50,6 @@ def _m(lang, key):
     return (MSG.get(lang) or MSG["es"])[key]
 
 
-def _is_staff(event) -> bool:
-    try:
-        return int(getattr(event.message.author, "role", 0) or 0) >= 100
-    except (TypeError, ValueError):
-        return False
-
-
 @client.event("on_group_member_join")
 async def on_member_join(event: respObject.Event):
     try:
@@ -64,6 +61,7 @@ async def on_member_join(event: respObject.Event):
         if not is_enabled(event.comId, chat_id):
             return
         lang = lang_of(event)
+        print("welcome lang:", lang, "scope:", scope_of(event))
         nick = user.nickname or "?"
         await reply(event, get_welcome_message(lang, nick, event.comId, chat_id))
         img = get_welcome_image()
@@ -76,32 +74,31 @@ async def on_member_join(event: respObject.Event):
         print("welcome error:", repr(e))
 
 
-@client.command(["/setwelcome"])
+@client.command(["!setwelcome"])
 @commands_enable_required()
 async def cmd_setwelcome(event: respObject.Event):
     lang = lang_of(event)
     if not await is_staff_ex(event):
-        return await reply(event, _m(lang, "staff"))
+        return await reply(event, deco.welcome_msg("staff", _m(lang, "staff")))
     com_id, chat_id = event.comId, event.message.chatId
     arg = args(event)
     low = arg.lower()
     if not arg:
         cur = get_cfg(com_id, chat_id).get("text")
-        head = _m(lang, "current") + "\n" + cur if cur else _m(lang, "default")
-        return await reply(event, head + "\n\n" + _m(lang, "usage"))
+        if cur:
+            head = deco.welcome_msg("reset", _m(lang, "current")) + "\n" + cur
+        else:
+            head = deco.welcome_msg("default", _m(lang, "default"))
+        usage = deco.welcome_msg("help", _m(lang, "usage_1"), _m(lang, "usage_2"))
+        return await reply(event, head + "\n\n" + usage)
     if low == "off":
         set_enabled(com_id, chat_id, False)
-        return await reply(event, _m(lang, "off"))
+        return await reply(event, deco.welcome_msg("ok", _m(lang, "off")))
     if low == "on":
         set_enabled(com_id, chat_id, True)
-        return await reply(event, _m(lang, "on"))
+        return await reply(event, deco.welcome_msg("ok", _m(lang, "on")))
     if low == "reset":
         reset(com_id, chat_id)
-        return await reply(event, _m(lang, "reset"))
+        return await reply(event, deco.welcome_msg("reset", _m(lang, "reset")))
     set_text(com_id, chat_id, arg)
-    await reply(event, _m(lang, "saved"))
-
-
-from src.core.ctx import is_staff as _is_staff  # noqa: E402
-
-from src.core.ctx import is_staff_ex  # noqa: E402
+    await reply(event, deco.welcome_msg("ok", _m(lang, "saved")))

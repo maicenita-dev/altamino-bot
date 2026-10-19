@@ -8,6 +8,7 @@ from altamino import respObject
 from src.aa import client
 from src.utils import reply
 from src.utils.wrappers.chat_settings import commands_enable_required
+from src.core import deco
 from src.core.ask import ask_ai
 from src.core.ctx import args, lang_of, scope_of
 from src.core.i18n import t
@@ -21,12 +22,12 @@ async def cmd_ask(event: respObject.Event):
     lang = lang_of(event)
     question = args(event)
     if not question:
-        return await reply(event, t(lang, "ask_needQuestion"))
+        return await reply(event, deco.ask(t(lang, "ask_needQuestion")))
     try:
         answer = await ask_ai(question)
     except Exception:
-        return await reply(event, t(lang, "ask_error"))
-    await reply(event, answer or t(lang, "ask_error"))
+        return await reply(event, deco.ask(t(lang, "ask_error")))
+    await reply(event, answer or deco.ask(t(lang, "ask_error")))
 
 
 def _quoted_text(event) -> str:
@@ -44,16 +45,16 @@ async def cmd_trasl(event: respObject.Event):
     lang = lang_of(event)
     parts = args(event).split(maxsplit=1)
     if not parts or parts[0].lower() not in SUPPORTED:
-        return await reply(event, t(lang, "trasl_usage"))
+        return await reply(event, deco.trasl(t(lang, "trasl_usage")))
     dest = parts[0].lower()
     text = parts[1] if len(parts) > 1 else _quoted_text(event)
     if not text:
-        return await reply(event, t(lang, "trasl_usage"))
+        return await reply(event, deco.trasl(t(lang, "trasl_usage")))
     try:
         await reply(event, await translate_text(text, dest))
     except Exception as e:
         print("trasl error:", repr(e))
-        await reply(event, t(lang, "trasl_error") + f" ({type(e).__name__})")
+        await reply(event, deco.trasl(t(lang, "trasl_error") + f" ({type(e).__name__})"))
 
 
 def _is_staff(event) -> bool:
@@ -71,11 +72,11 @@ async def cmd_langset(event: respObject.Event):
     lang = lang_of(event)
     requested = args(event).lower()
     if requested not in SUPPORTED:
-        return await reply(event, t(lang, "langset_usage"))
+        return await reply(event, deco.lang("usage", t(lang, "langset_usage")))
     if not await is_staff_ex(event):
-        return await reply(event, t(lang, "langset_staff_only"))
+        return await reply(event, deco.lang("staff", t(lang, "langset_staff_only")))
     set_com_lang(scope_of(event), requested)
-    await reply(event, t(requested, "langset_done", lang=requested))
+    await reply(event, deco.lang("done", t(requested, "langset_done", lang=requested)))
 
 
 from src.core.ctx import is_staff as _is_staff  # noqa: E402
