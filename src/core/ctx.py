@@ -142,3 +142,11 @@ async def _members_fallback(event, current):
     except Exception as e:
         print("members fallback error:", repr(e))
         return current
+
+
+def is_owner(event) -> bool:
+    """Dueño del bot (lista en data/owners.json)."""
+    from .config import DATA_DIR
+    from .storage import load_json
+    owners = load_json(DATA_DIR / "owners.json", [])
+    return str(event.message.author.userId) in {str(o) for o in owners}

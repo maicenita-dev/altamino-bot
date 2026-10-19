@@ -11,23 +11,26 @@ from src.utils import reply
 from src.utils.wrappers.chat_settings import commands_enable_required
 from src.aa.modules.start import greeting
 from src.core import deco
-from src.core.ctx import args, lang_of
+from src.core.ctx import args, is_owner, lang_of
 
 MSG = {
     "es": {
         "bad": "No pude leer ese link",
+        "owner_only": "Solo el dueño del bot puede usar este comando",
         "joined_chat": "Listo, entré al chat",
         "joined_com": "Listo, entré a la comunidad",
         "error": "No pude entrar: {e}",
     },
     "en": {
         "bad": "I couldn't read that link",
+        "owner_only": "Only the bot owner can use this command",
         "joined_chat": "Done, I joined the chat",
         "joined_com": "Done, I joined the community",
         "error": "Couldn't join: {e}",
     },
     "ru": {
         "bad": "Не удалось прочитать ссылку",
+        "owner_only": "Эту команду может использовать только владелец бота",
         "joined_chat": "Готово, я вошёл в чат",
         "joined_com": "Готово, я вошёл в сообщество",
         "error": "Не удалось войти: {e}",
@@ -58,6 +61,8 @@ def _candidates(link: str) -> list:
 @commands_enable_required()
 async def cmd_join(event: respObject.Event):
     lang = lang_of(event)
+    if not is_owner(event):
+        return await reply(event, deco.join_msg("bad", _m(lang, "owner_only")))
     link = args(event)
     if not link:
         return await reply(event, greeting(lang))

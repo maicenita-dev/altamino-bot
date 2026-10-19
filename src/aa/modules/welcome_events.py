@@ -100,5 +100,5 @@ async def cmd_setwelcome(event: respObject.Event):
     if low == "reset":
         reset(com_id, chat_id)
         return await reply(event, deco.welcome_msg("reset", _m(lang, "reset")))
-    set_text(com_id, chat_id, arg)
+    set_text(com_id, chat_id, arg[:600])
     await reply(event, deco.welcome_msg("ok", _m(lang, "saved")))
