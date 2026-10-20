@@ -4,8 +4,8 @@ from asyncio import to_thread
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-SUPPORTED = ["es", "en", "ru"]
-NAMES = {"es": "Spanish", "en": "English", "ru": "Russian"}
+SUPPORTED = ["es", "en", "ru", "pt"]
+NAMES = {"es": "Spanish", "en": "English", "ru": "Russian", "pt": "Portuguese"}
 
 
 def _get_json(url: str) -> object:

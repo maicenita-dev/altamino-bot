@@ -169,3 +169,8 @@ async def cmd_serie(event: respObject.Event):
     more = _m(lang, "more", n=len(chars) - 20) if len(chars) > 20 else None
     await reply(event, deco.series_list(
         _m(lang, "series_title", series=series, n=len(chars), free=free), lines, more))
+
+
+# --- pt (generado) ---
+from src.core.pt_cards import PT as _PT  # noqa: E402
+MSG["pt"] = _PT["cards_search"]

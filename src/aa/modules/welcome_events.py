@@ -43,6 +43,17 @@ MSG = {
         "current": "Текущее приветствие:",
         "default": "Используется стандартное приветствие.",
     },
+    "pt": {
+        "staff": "Somente a equipe pode alterar a mensagem de boas-vindas.",
+        "usage_1": "Uso: !setwelcome <texto> · !setwelcome off · on · reset",
+        "usage_2": "Você pode usar {name} (quem entra) e {bot}.",
+        "saved": "Mensagem de boas-vindas salva para este chat ✅",
+        "off": "Mensagem de boas-vindas desativada neste chat.",
+        "on": "Mensagem de boas-vindas ativada neste chat.",
+        "reset": "Mensagem de boas-vindas restaurada ao padrão.",
+        "current": "Mensagem de boas-vindas atual:",
+        "default": "Está sendo usada a mensagem de boas-vindas padrão.",
+    },
 }
 
 

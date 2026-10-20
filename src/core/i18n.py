@@ -3,7 +3,7 @@ Textos del bot en es/en/ru (portado de i18n.js).
 Los módulos de lógica devuelven DATOS; acá se arma el texto final.
 """
 
-SUPPORTED = ["es", "en", "ru"]
+SUPPORTED = ["es", "en", "ru", "pt"]
 
 SIGN_NAMES = {
     "es": {
@@ -285,3 +285,90 @@ def t(lang: str, key: str, /, **vars) -> str:
     for k, v in vars.items():
         template = template.replace("{" + k + "}", str(v))
     return template
+
+
+# ---- Português (pt-BR) ----
+STRINGS["pt"] = {
+    "intro_message": "Olá! Eu sou {name} 👋 Digite !help para ver tudo o que eu posso fazer.",
+    "ask_needQuestion": "Escreva uma pergunta depois do comando. Ex: !ask que dia é hoje",
+    "ask_error": "Não consegui uma resposta agora, tente de novo.",
+    "ping_result": "Pong!",
+    "ping_version": "Versão do bot: {version}",
+    "ping_latency": "Atraso: {ms} ms",
+    "ping_time": "Horário atual (UTC+1): {time}",
+    "horoscope_notRecognized": "Signo não reconhecido. Opções: {options}",
+    "horoscope_header": "{sign} — {date}",
+    "roll_result": "Você tirou {a} e {b} (total: {total})",
+    "dice_result": "Dado de {sides} lados: {result}",
+    "coin_heads": "Cara",
+    "coin_tails": "Coroa",
+    "eightball_noQuestion": "Faça uma pergunta primeiro.",
+    "percent_prompt": "Diga o que você quer medir. Ex: !percent amor",
+    "percent_result": "{what}: {value}%",
+    "ship_needMore": "Preciso de pelo menos 2 pessoas no chat.",
+    "ship_result": "{a} + {b} = {value}% de compatibilidade",
+    "choose_needMore": "Dê pelo menos duas opções separadas por vírgula.",
+    "choose_result": "{choice}",
+    "rps_invalid": "Escolha: pedra, papel ou tesoura.",
+    "rps_result": "Você: {user} | Bot: {bot} → {result}",
+    "rps_win": "você ganhou",
+    "rps_lose": "você perdeu",
+    "rps_tie": "empate",
+    "marry_noTarget": "Mencione alguém. Ex: !marry @usuário",
+    "marry_self": "Você não pode se casar consigo mesmo kkk.",
+    "marry_alreadyMarried": "Você já é casado(a). Divorcie-se primeiro com !divorce.",
+    "marry_targetMarried": "{target} já é casado(a) com alguém.",
+    "marry_married": "💍 {proposer} e {target} se casaram!",
+    "marry_proposed": "💌 {proposer} pediu {target} em casamento. Para aceitar, {target} escreve !marry mencionando {proposer}.",
+    "divorce_notMarried": "Você não é casado(a) com ninguém.",
+    "divorce_done": "💔 {user} se divorciou.",
+    "marriage_single": "Você não é casado(a) com ninguém.",
+    "marriage_married": "💍 Você é casado(a) com {partner}.",
+    "tts_needText": "Escreva o texto depois do comando. Ex: !tts olá",
+    "tts_error": "Não consegui gerar o áudio: {error}",
+    "tts_tooLong": "Max {max}.",
+    "langset_usage": "Use !langset es, !langset en, !langset ru ou !langset pt",
+    "langset_done": "Idioma alterado para {lang}.",
+    "langset_staff_only": "Somente a equipe pode alterar o idioma.",
+    "trasl_usage": "Use !trasl es, en, ru ou pt seguido do texto. Ex: !trasl en olá tudo bem",
+    "trasl_error": "Não consegui traduzir o texto, tente de novo.",
+}
+EIGHTBALL_ANSWERS["pt"] = [
+    "Sim, sem dúvida.", "Não conte com isso.", "Talvez.", "Melhor não te dizer agora.",
+    "Definitivamente sim.", "Muito duvidoso.", "Pergunte de novo mais tarde.", "Absolutamente não.",
+]
+RPS_NAMES["pt"] = ["pedra", "tesoura", "papel"]
+HOROSCOPE_PHRASES["pt"] = [
+    "Hoje é um bom dia para tomar uma decisão que você vinha adiando.",
+    "Cuidado com os gastos por impulso, sua carteira vai agradecer.",
+    "Alguém do seu passado pode reaparecer. Você decide se abre a porta.",
+    "Sua energia está alta hoje: aproveite para algo criativo.",
+    "Hora de ouvir mais e falar menos, principalmente em discussões.",
+    "Uma surpresa agradável está chegando, fique de olho.",
+    "É um bom dia para se reconectar com amigos que você deixou de lado.",
+    "Sua paciência vai ser testada, respire antes de responder.",
+]
+SIGN_NAMES["pt"] = {
+    "aries": "♈ Áries", "tauro": "♉ Touro", "geminis": "♊ Gêmeos", "cancer": "♋ Câncer",
+    "leo": "♌ Leão", "virgo": "♍ Virgem", "libra": "♎ Libra", "escorpio": "♏ Escorpião",
+    "sagitario": "♐ Sagitário", "capricornio": "♑ Capricórnio", "acuario": "♒ Aquário",
+    "piscis": "♓ Peixes",
+}
+
+# avisos de uso de los otros idiomas, ahora con pt
+STRINGS["es"]["langset_usage"] = "Usá !langset es, !langset en, !langset ru o !langset pt"
+STRINGS["en"]["langset_usage"] = "Use !langset es, !langset en, !langset ru or !langset pt"
+STRINGS["ru"]["langset_usage"] = "Используй !langset es, !langset en, !langset ru или !langset pt"
+STRINGS["es"]["trasl_usage"] = "Usá !trasl es, en, ru o pt seguido del texto. Ej: !trasl en hola que tal"
+STRINGS["en"]["trasl_usage"] = "Use !trasl es, en, ru or pt followed by the text. Ex: !trasl en hello how are you"
+STRINGS["ru"]["trasl_usage"] = "Используй !trasl es, en, ru или pt и текст. Пример: !trasl en привет как дела"
+
+# bienvenida en pt con la misma decoración que la de es
+try:
+    _wl = STRINGS["es"]["welcome_message"].split("\n")
+    _pre = _wl[1].split("Bienvenido")[0]
+    STRINGS["pt"]["welcome_message"] = "\n".join([
+        _wl[0], _pre + "Bem-vindo(a) {name}!", "",
+        _pre + "Eu sou {bot}, espero que você se divirta por aqui.", _wl[-1]])
+except Exception:
+    pass

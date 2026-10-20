@@ -206,3 +206,8 @@ async def cmd_rarezas(event: respObject.Event):
     chances = {f"c{i}": _pct(c) for i, c in enumerate(FAV_CHANCE)}
     await reply(event, deco.rarities(_m(lang, "title"), lines, _m(lang, "note"),
                                      _m(lang, "fav_note", **chances)))
+
+
+# --- pt (generado) ---
+from src.core.pt_cards import PT as _PT  # noqa: E402
+MSG["pt"] = _PT["cards_extra"]

@@ -408,3 +408,8 @@ def _download(url: str) -> BytesIO:
         buf.name = "card.jpg"
         return buf
     return _download_ffmpeg(url)
+
+
+# --- pt (generado) ---
+from src.core.pt_cards import PT as _PT  # noqa: E402
+MSG["pt"] = _PT["cards"]

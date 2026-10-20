@@ -5,7 +5,7 @@ from .storage import load_json, save_json
 DB_PATH = DATA_DIR / "lang.json"        # por usuario (anterior)
 COM_PATH = DATA_DIR / "lang_com.json"   # por comunidad
 DEFAULT_LANG = "es"
-SUPPORTED = ["es", "en", "ru"]
+SUPPORTED = ["es", "en", "ru", "pt"]
 
 
 def _key(com_id) -> str:

@@ -1,0 +1,56 @@
+"""Generado por translate_pt.py (se vuelve a generar, no lo edites a mano)."""
+
+PT = {'cards': {'no_rolls_1': 'Você usou todas as rolagens {n}.',
+           'no_rolls_2': 'Elas se renovam em {t}.',
+           'no_catalog': 'Não consegui carregar o catálogo de personagens.',
+           'none_free': 'Não há mais caracteres livres.',
+           'roll_left': 'Rolagens restantes: {left}/{n}',
+           'roll_claim': 'Use !claim para reivindicar (5 min).',
+           'nothing': 'Você não tem rolagem para reivindicar (ou expirou).',
+           'taken': 'Alguém já reivindicou esse personagem.',
+           'wait': 'Você pode reivindicar de novo em {t}.',
+           'claimed': '{nick} disse que {name}',
+           'empty': 'Você ainda não tem personagens. Experimente !waifu ou !husbando.',
+           'harem': 'Coleção de {nick} ({n}) — página {p}/{tp}',
+           'top': 'Colecionadores top!',
+           'no_top': 'Ninguém reivindicou personagens ainda.',
+           'cd_rolls': 'Rolagens: {left}/{n}',
+           'cd_claim': 'Reclamação: {claim}',
+           'ready': 'disponível ✅'},
+ 'cards_search': {'usage_search': 'Escreva um nome. Ex: !buscar miku',
+                  'usage_card': 'Escreva o nome do personagem. Ex.: !carta Hatsune Miku',
+                  'usage_series': 'Escreva o nome da série. Ex: !serie Hazbin Hotel',
+                  'none': 'Não encontrei personagens com esse nome.',
+                  'none_series': 'Desculpe, série não encontrada.',
+                  'results': '🔎 Resultados para «{q}»:',
+                  'series_title': '📺 {series} — {n} personagens ({free} livres)',
+                  'free': 'grátis',
+                  'owned': 'de {nick}',
+                  'more': '…e {n} mais',
+                  'others': 'Mais resultados: !buscar {q}'},
+ 'cards_extra': {'no_fav': 'Você ainda não tem um favorito. Escolha um com !fav <nome>.',
+                 'current': '⭐ Seu favorito: {name} · {series} ({chance}% extra por rolagem)',
+                 'wait': 'Você pode trocar seu favorito em {t}.',
+                 'none': 'Nenhum personagem encontrado com esse nome.',
+                 'taken': '{name} já pertence a {nick}. Escolha outro.',
+                 'set': '⭐ {name} agora é seu favorito. Ele tem {chance}% de chance extra de '
+                        'aparecer em cada rolagem.',
+                 'set_owned': '⭐ {name} agora é seu favorito. Já é seu, então aparece com ⭐ em '
+                              '!harem.',
+                 'off': 'Você removeu seu favorito.',
+                 'lib_usage': 'Escreva o nome do personagem. Ex.: !liberar Hatsune Miku',
+                 'lib_none': 'Você não tem um personagem com esse nome.',
+                 'lib_confirm': 'Tem certeza de que quer liberar {name}? Escreva !liberar {name} '
+                                'de novo em até {s} segundos para confirmar.',
+                 'lib_done': '{nick} liberou {name}. Agora está livre para outras pessoas '
+                             'reivindicarem.',
+                 'title': 'Raridades das cartas',
+                 'common': '⚪ Comum — {p}% das rolagens',
+                 'rare': '🔵 Rara — {p}% das rolagens',
+                 'epic': '🟣 Épica — {p}% das rolagens',
+                 'legendary': '🟡 Lendária — {p}% das rolagens',
+                 'note': 'A raridade depende da popularidade do personagem: quanto mais querido, '
+                         'mais raro. Em Vocaloid, UTAU, fanloids, Hazbin Hotel e Helluva Boss, a '
+                         'raridade é definida manualmente.',
+                 'fav_note': 'Seu favorito (!fav) tem uma chance extra de aparecer pra você: ⚪ '
+                             '{c0}% · 🔵 {c1}% · 🟣 {c2}% · 🟡 {c3}%.'}}

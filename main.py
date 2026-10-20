@@ -21,7 +21,7 @@ load_env()
 
 from src.aa import client  # noqa: E402
 # importar los módulos los registra
-from src.aa.modules import chat_tools, fun, horoscope, join, marry, start, tts, welcome_events, debug_where, cards, cards_search, cards_extra  # noqa: E402,F401
+from src.aa.modules import chat_tools, fun, horoscope, join, marry, start, tts, welcome_events, cards, cards_search, cards_extra  # noqa: E402,F401
 
 
 class _WSWatchdog(logging.Handler):

@@ -3,6 +3,7 @@
 cd "$HOME/altamino-bot" || exit 1
 trap 'echo; echo "Bot detenido."; exit 0' INT
 while true; do
+  ./backup.sh
   python main.py
   code=$?
   if [ "$code" -eq 4 ]; then
