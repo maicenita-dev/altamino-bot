@@ -7,6 +7,7 @@ from src.aa import client
 from src.aa.modules.cards import (FAV_CHANCE, WEIGHTS, _fmt, _load, _lock,
                                   _save, _user)
 from src.aa.modules.cards_search import _norm, _score
+from src.aa.modules.economy import REWARD, reward_text
 from src.core import deco
 from src.core.catalog import get_catalog
 from src.core.ctx import args, lang_of, scope_of
@@ -23,6 +24,7 @@ MSG = {
         "current": "⭐ Tu favorito: {name} · {series} ({chance}% extra por tirada)",
         "wait": "Podés cambiar tu favorito en {t}.",
         "none": "No encontré personajes con ese nombre.",
+        "ambiguous": "Encontré varios personajes: {names}. Escribí el nombre completo.",
         "taken": "{name} ya es de {nick}. Elegí otro.",
         "set": "⭐ {name} es ahora tu favorito. Tiene {chance}% extra de salir en cada tirada.",
         "set_owned": "⭐ {name} es ahora tu favorito. Ya es tuyo, así que aparece con ⭐ en !harem.",
@@ -44,6 +46,7 @@ MSG = {
         "current": "⭐ Your favorite: {name} · {series} ({chance}% extra per roll)",
         "wait": "You can change your favorite in {t}.",
         "none": "No characters found with that name.",
+        "ambiguous": "I found several characters: {names}. Write the full name.",
         "taken": "{name} already belongs to {nick}. Pick another one.",
         "set": "⭐ {name} is now your favorite. It has a {chance}% extra chance to show up on each roll.",
         "set_owned": "⭐ {name} is now your favorite. It's already yours, so it shows with ⭐ in !harem.",
@@ -65,6 +68,7 @@ MSG = {
         "current": "⭐ Твой любимый: {name} · {series} (+{chance}% за бросок)",
         "wait": "Сменить любимого можно через {t}.",
         "none": "Персонажи с таким именем не найдены.",
+        "ambiguous": "Найдено несколько персонажей: {names}. Напиши полное имя.",
         "taken": "{name} уже у {nick}. Выбери другого.",
         "set": "⭐ {name} теперь твой любимый. Дополнительный шанс выпасть в каждом броске: {chance}%.",
         "set_owned": "⭐ {name} теперь твой любимый. Он уже твой, поэтому в !harem отмечен ⭐.",
@@ -93,17 +97,16 @@ def _pct(x: float) -> str:
 
 
 async def _find(text):
-    """Mejor coincidencia en los dos catálogos: (género, personaje) o None."""
+    """Coincidencias en los dos catálogos: lista de (puntaje, género, personaje), de mejor a peor."""
     q = _norm(text)
-    best = None
+    hits = []
     for kind in ("waifu", "husbando"):
         for c in await get_catalog(kind):
             sc = _score(q, c["name"], c["series"])
             if sc:
-                key = (sc, c["rarity"], c.get("fav") or 0)
-                if best is None or key > best[0]:
-                    best = (key, kind, c)
-    return (best[1], best[2]) if best else None
+                hits.append(((sc, c["rarity"], c.get("fav") or 0), kind, c))
+    hits.sort(key=lambda h: h[0], reverse=True)
+    return hits
 
 
 @client.command(["!fav"])
@@ -136,11 +139,17 @@ async def cmd_fav(event: respObject.Event):
             _save(scope, db)
             return await reply(event, deco.fav_off(_m(lang, "off")))
 
-        found = await _find(arg)
-        if not found:
+        hits = await _find(arg)
+        if not hits:
             _save(scope, db)
             return await reply(event, deco.notfound(_m(lang, "none")))
-        kind, ch = found
+        top = hits[0][0][0]
+        tied = [h for h in hits if h[0][0] == top]
+        if top < 5 and len(tied) > 1:      # varias coincidencias y ninguna exacta: no adivinar
+            _save(scope, db)
+            names = ", ".join(h[2]["name"] for h in tied[:5])
+            return await reply(event, deco.ambiguous(_m(lang, "ambiguous", names=names)))
+        _, kind, ch = hits[0]
         fid = str(ch["id"])
         own = db["owners"].get(fid)
         if own and own["user"] != uid:
@@ -188,9 +197,11 @@ async def cmd_liberar(event: respObject.Event):
         pend = _pending.get(key)
         if pend and pend[0] == cid and now - pend[1] <= CONFIRM_SECONDS:
             del db["owners"][cid]
+            u["coins"] = u.get("coins", 0) + REWARD[c["rarity"]]
             _pending.pop(key, None)
             _save(scope, db)
-            return await reply(event, deco.lib("done", _m(lang, "lib_done", nick=u["nick"], name=c["name"])))
+            return await reply(event, deco.lib("done", _m(lang, "lib_done", nick=u["nick"], name=c["name"])
+                                              + " " + reward_text(lang, REWARD[c["rarity"]])))
         _pending[key] = (cid, now)
         _save(scope, db)
     await reply(event, deco.lib("confirm", _m(lang, "lib_confirm", name=c["name"], s=CONFIRM_SECONDS)))

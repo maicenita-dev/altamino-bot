@@ -32,9 +32,10 @@ PT = {'cards': {'no_rolls_1': 'Você usou todas as rolagens {n}.',
                  'current': '⭐ Seu favorito: {name} · {series} ({chance}% extra por rolagem)',
                  'wait': 'Você pode trocar seu favorito em {t}.',
                  'none': 'Nenhum personagem encontrado com esse nome.',
+                 'ambiguous': 'Encontrei vários personagens: {names}. Escreva o nome completo.',
                  'taken': '{name} já pertence a {nick}. Escolha outro.',
-                 'set': '⭐ {name} agora é seu favorito. Ele tem {chance}% de chance extra de '
-                        'aparecer em cada rolagem.',
+                 'set': '⭐ {name} agora é seu favorito. A chance extra de aparecer em cada rolagem '
+                        'é de {chance}%.',
                  'set_owned': '⭐ {name} agora é seu favorito. Já é seu, então aparece com ⭐ em '
                               '!harem.',
                  'off': 'Você removeu seu favorito.',

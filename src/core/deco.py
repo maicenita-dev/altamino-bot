@@ -223,7 +223,9 @@ def fav_off(text: str) -> str:
 def lib(kind: str, text: str) -> str:
     if kind == "confirm":
         return _s(TTS_TOP, MARRY_FACE, text)
-    face = "⿻ 💔⠴ㅤ֪ㅤ—ㅤ" if kind == "done" else "⿻ 🌸⠴ㅤ֪ㅤ—ㅤ"
+    if kind == "done":
+        return _s(TTS_TOP, "(｡>ㅅ<｡)ㅤ", text)
+    face = "⿻ 🌸⠴ㅤ֪ㅤ—ㅤ"
     return _s(SHIP_TOP, face, text)
 
 
@@ -236,3 +238,47 @@ def rarities(title: str, rows: list, note: str, fav_note: str) -> str:
 
 def notfound(text: str) -> str:
     return _s(TTS_TOP, "ฅ(´ര ̫ ര`)ㅤ", text)
+
+
+# ---- economía, favorito ambiguo y espera de !join ----
+D1_TOP = "[c]∵∴∵∴ ୨୧ ∵∴∵∴ ୨୧ ∵∴∵∴∵ ୨୧ ∴∵∴∵"
+SHOP_TOP = "[c]𐙚𓏵𓏵𓏵𓏵𓏵𓏵𓏵𓏵𓏵𓏵𓏵𓏵𓏵𐙚"
+T2_TOP = "[c]◟ ͜ ◞ ೀ ◟ ͜ ◞ ◟ ͜ ◞ ೀ ◟ ͜ ◞ೀ ◟ ͜ ◞ೀ ◟ ͜ ◞"
+BUY_FACES = {
+    "usage": (TTS_TOP, "◍´മ⩊മ`◍ ٛ𐙚ㅤ"),
+    "unknown": (TTS_TOP, "꒰ᐡ⩌⤙⩌ᐡ꒱ㅤ"),
+    "not_needed": (TTS_TOP, ASK_FACE),
+    "poor": (T2_TOP, MARRY_FACE),
+    "fav": (T2_TOP, "꒰◍ ´꒳` ◍꒱ㅤ"),
+    "rolls": (T2_TOP, "(,,ᴗ  ̫ᴗ,,)ꕤ*.ﾟㅤ"),
+    "claim": (T2_TOP, "･ﾟ･(｡>ω<｡)･ﾟ･ㅤ"),
+}
+
+
+def daily(kind: str, text: str) -> str:
+    face = "･ﾟ･(｡>ω<｡)･ﾟ･ㅤ" if kind == "ok" else "໒꒰՞ ܸ. .ܸ՞꒱აㅤ"
+    return _lines(D1_TOP, ["[c]" + face + text])
+
+
+def coins(head: str, daily_line: str) -> str:
+    return _lines(D1_TOP, ["[c]◍´മ⩊മ`◍ ٛ𐙚ㅤ" + head, "[c]" + daily_line])
+
+
+def shop(title: str, items: list, footer: str) -> str:
+    p = "꒪꒳꒪🍤ㅤ"
+    lines = ["[cbu]ꕤᴗ ᴗ)⁾⁾♡ㅤ" + title, ""] + [p + i for i in items]
+    lines += ["", "[c]໒꒰ྀི◍•⩊•◍𐙚꒱აㅤ" + footer]
+    return _lines(SHOP_TOP, lines)
+
+
+def buy(kind: str, text: str) -> str:
+    top, face = BUY_FACES[kind]
+    return _lines(top, ["[c]" + face + text])
+
+
+def ambiguous(text: str) -> str:
+    return _lines(T2_TOP, ["[c]ฅ(´ര ̫ ര`)ㅤ" + text])
+
+
+def join_wait(text: str) -> str:
+    return _lines(T2_TOP, ["[c](✿◠‿◠)ㅤ" + text])

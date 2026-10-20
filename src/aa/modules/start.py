@@ -134,3 +134,9 @@ for _a, _b in [
 ]:
     _pt = _pt.replace(_a, _b)
 TEXTS["pt"] = _pt
+
+
+# ---- economía en el menú ----
+for _k in list(TEXTS):
+    TEXTS[_k] = TEXTS[_k].replace("!buscar · !carta · !serie",
+                                  "!buscar · !carta · !serie\n!daily · !coins · !shop · !buy", 1)

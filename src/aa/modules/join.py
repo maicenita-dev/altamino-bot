@@ -123,7 +123,7 @@ async def cmd_join(event: respObject.Event):
         return await reply(event, greeting(lang))
     wait = _join_limit(event)
     if wait:
-        return await reply(event, deco.join_msg("bad", _m(lang, "cooldown", t=_fmt_wait(wait))))
+        return await reply(event, deco.join_wait(_m(lang, "cooldown", t=_fmt_wait(wait))))
     _log_join(event, link)
 
     bad = deco.join_msg("bad", _m(lang, "bad"))

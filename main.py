@@ -21,7 +21,7 @@ load_env()
 
 from src.aa import client  # noqa: E402
 # importar los módulos los registra
-from src.aa.modules import chat_tools, fun, horoscope, join, marry, start, tts, welcome_events, cards, cards_search, cards_extra  # noqa: E402,F401
+from src.aa.modules import chat_tools, fun, horoscope, join, marry, start, tts, welcome_events, cards, cards_search, cards_extra, economy  # noqa: E402,F401
 
 
 class _WSWatchdog(logging.Handler):
@@ -58,6 +58,8 @@ async def main():
     await client.login(os.environ["ALTAMINO_EMAIL"], os.environ["ALTAMINO_PASSWORD"])
     print("Login OK, conectando socket...")
     await client.ws_connect()
+    from src.core.presence import start_presence
+    start_presence(client)
     await asyncio.Event().wait()  # quedarse corriendo
 
 
