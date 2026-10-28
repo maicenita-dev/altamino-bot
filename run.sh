@@ -4,7 +4,7 @@ cd "$HOME/altamino-bot" || exit 1
 trap 'echo; echo "Bot detenido."; exit 0' INT
 while true; do
   ./backup.sh
-  python main.py
+  timeout 12h python main.py
   code=$?
   if [ "$code" -eq 4 ]; then
     echo "Ya hay otra copia del bot corriendo. No se reinicia."

@@ -6,6 +6,12 @@ import time
 from pathlib import Path
 
 
+def _unquote(v):
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in ("'", '"'):
+        return v[1:-1]
+    return v
+
+
 def load_env(path=".env"):
     p = Path(path)
     if not p.exists():
@@ -14,14 +20,14 @@ def load_env(path=".env"):
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip().strip("'\""))
+            os.environ.setdefault(k.strip(), _unquote(v.strip()))
 
 
 load_env()
 
 from src.aa import client  # noqa: E402
 # importar los módulos los registra
-from src.aa.modules import chat_tools, fun, horoscope, join, marry, start, tts, welcome_events, cards, cards_search, cards_extra, economy  # noqa: E402,F401
+from src.aa.modules import chat_tools, fun, horoscope, join, marry, start, tts, welcome_events, cards, cards_search, cards_extra, economy, blackjack, imagen  # noqa: E402,F401
 
 
 class _WSWatchdog(logging.Handler):
@@ -48,10 +54,8 @@ class _WSWatchdog(logging.Handler):
 
 
 _watchdog = _WSWatchdog()
-logging.getLogger().addHandler(_watchdog)
-_lib_log = logging.getLogger("altamino")
-if not _lib_log.propagate:
-    _lib_log.addHandler(_watchdog)
+for _name in ("Logger", "altamino"):
+    logging.getLogger(_name).addHandler(_watchdog)
 
 
 async def main():

@@ -140,3 +140,13 @@ TEXTS["pt"] = _pt
 for _k in list(TEXTS):
     TEXTS[_k] = TEXTS[_k].replace("!buscar · !carta · !serie",
                                   "!buscar · !carta · !serie\n!daily · !coins · !shop · !buy", 1)
+
+
+# ---- blackjack en el menú ----
+for _k in list(TEXTS):
+    TEXTS[_k] = TEXTS[_k].replace("!choose !rps", "!choose !rps\n!blackjack · !hit · !stand · !double", 1)
+
+
+# ---- imagen en el menú ----
+for _k in list(TEXTS):
+    TEXTS[_k] = TEXTS[_k].replace(" · !ping", " · !ping · !imagine", 1)
